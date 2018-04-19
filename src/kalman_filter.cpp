@@ -52,11 +52,24 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     float c1 = px*px+py*py;
     float c2 = sqrt(c1);
     float c3 = atan2(py,px);
-    float c4 = (px*vx + py*vy) / c2;
     
+    //Avoid devide by 0
+    float c4 = fabs(c1) < 0.0001 ? 0 : (px*vx + py*vy) / c2;
+
     VectorXd f_x_ = VectorXd(3);
     f_x_ << c2, c3, c4;
     VectorXd y = z - f_x_;
+    
+    // Normalize the radian to -pi and pi
+    while (y(1)>M_PI)
+    {
+        y(1) -= 2 * M_PI;
+    }
+    while (y(1)<-M_PI)
+    {
+        y(1) += 2 * M_PI;
+    }
+    
     MatrixXd Ht = H_.transpose();
     MatrixXd S = H_ * P_ * Ht + R_;
     MatrixXd Si = S.inverse();
